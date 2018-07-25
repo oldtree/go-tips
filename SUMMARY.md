@@ -2,8 +2,8 @@
 
 * [Introduction](README.md)
 * [积累和收集](chapter1.md)
-  * 不要过度panic
-  * 不要拘泥于面向对象
+  * [不要过度panic](chapter1/bu-yao-guo-du-panic.md)
+  * [不要拘泥于面向对象](chapter1/bu-yao-ju-ni-yu-mian-xiang-dui-xiang.md)
   * 小提醒
   * 一些基础介绍
   * context包
