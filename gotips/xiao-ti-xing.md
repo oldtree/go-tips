@@ -69,16 +69,16 @@
 > import "fmt"
 >
 > func Triple(n int) (r int) {
-> 	defer func() {
-> 		r += n // modify the return value
-> 	}()
+>     defer func() {
+>         r += n // modify the return value
+>     }()
 >
-> 	return n + n // <=> r = n + n; return
+>     return n + n // <=> r = n + n; return
 > }
 >
 > func main() {
-> 	fmt.Println(Triple(5)) // 15
-> } 
+>     fmt.Println(Triple(5)) // 15
+> }
 > ```
 >
 > 对于切片 s, 循环 for i = range s {…} 不等于 for i = 0; i &lt; len\(s\); i++ {…},对于两个循环, 迭代变量 i 的相应最终值可能不同.
@@ -91,22 +91,22 @@
 > var i int
 >
 > func fa(s []int, n int) int {
-> 	i = n
-> 	for i = 0; i < len(s); i++ {}
-> 	return i
+>     i = n
+>     for i = 0; i < len(s); i++ {}
+>     return i
 > }
 >
 > func fb(s []int, n int) int {
-> 	i = n
-> 	for i = range s {}
-> 	return i
+>     i = n
+>     for i = range s {}
+>     return i
 > }
 >
 > func main() {
-> 	s := []int{2, 3, 5, 7, 11, 13}
-> 	fmt.Println(fa(s, -1), fb(s, -1)) // 6 5
-> 	s = nil
-> 	fmt.Println(fa(s, -1), fb(s, -1)) // 0 -1
+>     s := []int{2, 3, 5, 7, 11, 13}
+>     fmt.Println(fa(s, -1), fb(s, -1)) // 6 5
+>     s = nil
+>     fmt.Println(fa(s, -1), fb(s, -1)) // 0 -1
 > }
 > ```
 >
@@ -124,11 +124,11 @@
 > import "time"
 >
 > func main() {
-> 	go func() {
-> 		time.Sleep(time.Second)
-> 		os.Exit(1)
-> 	}()
-> 	select{}
+>     go func() {
+>         time.Sleep(time.Second)
+>         os.Exit(1)
+>     }()
+>     select{}
 > }
 >
 > $ go run a.go
@@ -148,19 +148,55 @@
 > import "runtime"
 >
 > func main() {
-> 	c := make(chan int)
-> 	go func() {
-> 		defer func() {c <- 1}()
-> 		defer fmt.Println("Go")
-> 		func() {
-> 			defer fmt.Println("C")
-> 			runtime.Goexit()
-> 		}()
-> 		fmt.Println("Java")
-> 	}()
-> 	<-c
+>     c := make(chan int)
+>     go func() {
+>         defer func() {c <- 1}()
+>         defer fmt.Println("Go")
+>         func() {
+>             defer fmt.Println("C")
+>             runtime.Goexit()
+>         }()
+>         fmt.Println("Java")
+>     }()
+>     <-c
+> }
+> ```
+
+* 指针
+
+> 对于数值指针 p, 表达式_p++ 相当于 \(_p\)++. 如果 p 不是数值指针, 则 \*p++ 编译不过
+
+> 在 Go 中, 指针不能进行算术运算. 对于指针值 p, 语句 p++ 在 Go 中是非法的. 如果 p 是一个指向数值的指针, 那么 Go 编译器会将 \*v++ 视为 \(\*v\)++.
+>
+> 例如:
+>
+> ```
+> package main
+>
+> import "fmt"
+>
+> func main() {
+> 	a := int64(5)
+> 	p := &a
+>
+> 	// The following two lines don't compile.
+> 	/*
+> 	p++
+> 	p = (&a) + 8
+> 	*/
+>
+> 	*p++
+> 	fmt.Println(*p, a)   // 6 6
+> 	fmt.Println(p == &a) // true
 > } 
 > ```
+>
+> 如果两种类型的基本类型相同, 则两个命名指针类型的值可以相互转换. 两种指针类型的底层类型可能不同
+>
+> 给定非接口值 x 和非接口类型 T, 假定 x 的类型为 Tx
+>
+> * 如果 Tx 和 T 共享相同的底层类型\(忽略结构体 tags\), 那么 x 可以显示地转换为 T, 尤其当 Tx 或者 T 不是一个定义类型并且它们的底层类型相同\(考虑结构体 tags\), 那么 x 可以隐式地转换为 T.
+> * 如果 Tx 和 T 具有不同的底层类型, 但 Tx 和 T 都是[非定义](https://go101.org/article/type-system-overview.html#non-defined-type)的指针类型, 并且它们的基类型共享相同的底层类型\(忽略结构体 tags\), 则 x 可以\(并且必须\)可以显示地转换为 T.
 
 
 
