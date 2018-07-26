@@ -16,4 +16,5 @@
   * [go的内存模型](gotips/gode-nei-cun-mo-xing.md)
   * [go中的垃圾收集gc](gotips/gozhong-de-la-ji-shou-ji-gc.md)
   * [go中race竞争检测](gotips/gozhong-race-jing-zheng-jian-ce.md)
+  * [一些值得参考的blog](gotips/yi-xie-zhi-de-can-kao-de-blog.md)
 
