@@ -164,8 +164,8 @@
 
 * 指针
 
-> 对于数值指针 p, 表达式_p++ 相当于 \(_p\)++. 如果 p 不是数值指针, 则 \*p++ 编译不过
-
+> 对于数值指针 p, 表达式\_p++ 相当于 \(\_p\)++. 如果 p 不是数值指针, 则 \*p++ 编译不过
+>
 > 在 Go 中, 指针不能进行算术运算. 对于指针值 p, 语句 p++ 在 Go 中是非法的. 如果 p 是一个指向数值的指针, 那么 Go 编译器会将 \*v++ 视为 \(\*v\)++.
 >
 > 例如:
@@ -176,19 +176,19 @@
 > import "fmt"
 >
 > func main() {
-> 	a := int64(5)
-> 	p := &a
+>     a := int64(5)
+>     p := &a
 >
-> 	// The following two lines don't compile.
-> 	/*
-> 	p++
-> 	p = (&a) + 8
-> 	*/
+>     // The following two lines don't compile.
+>     /*
+>     p++
+>     p = (&a) + 8
+>     */
 >
-> 	*p++
-> 	fmt.Println(*p, a)   // 6 6
-> 	fmt.Println(p == &a) // true
-> } 
+>     *p++
+>     fmt.Println(*p, a)   // 6 6
+>     fmt.Println(p == &a) // true
+> }
 > ```
 >
 > 如果两种类型的基本类型相同, 则两个命名指针类型的值可以相互转换. 两种指针类型的底层类型可能不同
@@ -197,6 +197,184 @@
 >
 > * 如果 Tx 和 T 共享相同的底层类型\(忽略结构体 tags\), 那么 x 可以显示地转换为 T, 尤其当 Tx 或者 T 不是一个定义类型并且它们的底层类型相同\(考虑结构体 tags\), 那么 x 可以隐式地转换为 T.
 > * 如果 Tx 和 T 具有不同的底层类型, 但 Tx 和 T 都是[非定义](https://go101.org/article/type-system-overview.html#non-defined-type)的指针类型, 并且它们的基类型共享相同的底层类型\(忽略结构体 tags\), 则 x 可以\(并且必须\)可以显示地转换为 T.
+>
+> 一般性例子:
+>
+>     package main
+>
+>     func main() {
+>     	// []int, IntSlice and MySlice share
+>     	// the same underlying type: []int
+>     	type IntSlice []int
+>     	type MySlice  []int
+>
+>     	var s  = []int{}
+>     	var is = IntSlice{}
+>     	var ms = MySlice{}
+>     	var x struct{n int `foo`}
+>     	var y struct{n int `bar`}
+>
+>     	// The two lines both fail to compile.
+>     	/*
+>     	is = ms
+>     	ms = is
+>     	*/
+>
+>     	// Must use explicit conversions here.
+>     	is = IntSlice(ms)
+>     	ms = MySlice(is)
+>     	x = struct{n int `foo`}(y)
+>     	y = struct{n int `bar`}(x)
+>
+>     	// Implicit conversions are okay here.
+>     	s = is
+>     	is = s
+>     	s = ms
+>     	ms = s
+>     }
+
+> 指针的例子:
+>
+> ```
+> package main
+>
+> func main() {
+> 	type MyInt int
+> 	type IntPtr *int
+> 	type MyIntPtr *MyInt
+>
+> 	var pi = new(int) // type is *int
+> 	var ip IntPtr = pi // ok, same underlying type
+>
+> 	// var _ *MyInt = pi // can't convert implicitly
+> 	var _ = (*MyInt)(pi) // ok, must explicitly
+>
+> 	// var _ MyIntPtr = pi  // can't convert implicitly
+> 	// var _ = MyIntPtr(pi) // can't convert explicitly
+> 	var _ MyIntPtr = (*MyInt)(pi)  // ok
+> 	var _ = MyIntPtr((*MyInt)(pi)) // ok
+>
+> 	// var _ MyIntPtr = ip  // can't convert implicitly
+> 	// var _ = MyIntPtr(ip) // can't convert explicitly
+> 	var _ MyIntPtr = (*MyInt)((*int)(ip))  // ok
+> 	var _ = MyIntPtr((*MyInt)((*int)(ip))) // ok
+> } 
+> ```
+>
+> 不同零大小的值的地址可能相同也可能不同.
+>
+> 两个零大小值的地址是否相等取决于编译器和编译器版本.
+>
+> ```
+> package main
+>
+> import "fmt"
+>
+> func main() {
+> 	a := struct{}{}
+> 	b := struct{}{}
+> 	x := struct{}{}
+> 	y := struct{}{}
+> 	m := [10]struct{}{}
+> 	n := [10]struct{}{}
+> 	o := [10]struct{}{}
+> 	p := [10]struct{}{}
+>
+> 	fmt.Println(&x, &y, &o, &p)
+>
+> 	// For the standard Go compiler (1.10),
+> 	// x, y, o and p escape to heap,
+> 	// but a, b, m and n are allocated on stack.
+>
+> 	fmt.Println(&a == &b) // false
+> 	fmt.Println(&x == &y) // true
+> 	fmt.Println(&a == &x) // false
+>
+> 	fmt.Println(&m == &n) // false
+> 	fmt.Println(&o == &p) // true
+> 	fmt.Println(&n == &p) // false
+> } 
+> ```
+>
+> 上面代码中的输出用于标准 Go 编译器 1.10.
+>
+> 指针类型的基类型可能是指针类型本身
+>
+> ```
+> package main
+>
+> func main() {
+> 	type P *P
+> 	var p P
+> 	p = &p
+> 	p = **************p
+> }
+> ```
+
+> 同样,
+>
+> 1. 切片类型的元素类型可以是切片类型本身,
+> 2. 映射类型的元素类型可以是映射类型本身,
+> 3. 管道类型的元素类型可以是管道类型本身
+> 4. 函数类型的参数和结果类型可以是函数类型本身.
+>
+> ```
+> package main
+>
+> func main() {
+> 	type S []S
+> 	type M map[string]M
+> 	type C chan C
+> 	type F func(F) F
+>
+> 	s := S{0:nil}
+> 	s[0] = s
+> 	m := M{"Go": nil}
+> 	m["Go"] = m
+> 	c := make(C, 3)
+> 	c <- c; c <- c; c <- c
+> 	var f F
+> 	f = func(F)F {return f}
+>
+> 	_ = s[0][0][0][0][0][0][0][0]
+> 	_ = m["Go"]["Go"]["Go"]["Go"]
+> 	<-<-<-c
+> 	f(f(f(f(f))))
+> }
+> ```
+
+> 关于选择器的细节
+>
+> 对于一个指针值, 不管其类型是否定义, 如果它的\(指针\)类型的基类型是一个结构体类型, 那么指针值可以访问它引用的结构体值的字段. 但是, 如果指针值的类型是定义的类型, 则该值无法访问其引用的值的方法.
+>
+> ```
+> package main
+>
+> type T struct {
+> 	x int
+> }
+> func (T) m(){} // T has one method.
+>
+> type P *T  // a defined one-level pointer type.
+> type PP *P // a defined two-level pointer type.
+>
+> func main() {
+> 	var t T
+> 	var tp = &t
+> 	var tpp = &tp
+> 	var p P = tp
+> 	var pp PP = &p
+> 	tp.x = 12  // okay
+> 	p.x = 34   // okay
+> 	pp.x = 56  // error: type PP has no field or method x
+> 	tpp.x = 78 // error: type **T has no field or method x)
+>
+> 	tp.m()  // okay. Type *T also has a "m" method.
+> 	p.m()   // error: type P has no field or method m
+> 	pp.m()  // error: type PP has no field or method m
+> 	tpp.m() // error: type **T has no field or method m
+> } 
+> ```
 
 
 
