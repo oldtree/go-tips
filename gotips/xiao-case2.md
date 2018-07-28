@@ -9,7 +9,7 @@
 > 1. 字面值 ： `var s = "中国人"`
 > 2. 码点表示法： `var s1 = "\u4e2d\u56fd\u4eba"`或者 ：`var s2 = "\U00004e2d\U000056fd\U00004eba`
 > 3. 字节序列表示法（二进制表示法）：`var s3 = "\xe4\xb8\xad\xe5\x9b\xbd\xe4\xba\xba"`
-
+>
 > 这三种表示法中，除字面值转换为字节序列存储时根据编辑器保存的源码文件编码格式之外，其他两种均不受编码格式影响。我们可以通过逐字节输出来查 看字节序列的内容
 >
 > ```
@@ -71,8 +71,95 @@
 >         i)
 > }
 > ```
-
+>
 > 实际编码中，我们可能经常遇到的是fmt.Printf系列方法中format string太长的情况，但由于Go不支持相邻字符串自动连接\(concatenate\)，只能通过+来连接fmt字符串，且+必须放在前一行末尾。
+
+* **Method Set**
+
+> Method Set是Go语法中一个重要的隐式概念，在为interface变量做动态类型赋值、embeding struct/interface、type alias、method expression时都会用到Method Set这个重要概念。
+>
+> * **interface的Method Set**
+>
+> > 根据Go spec，interface类型的Method Set就是其interface（An interface type specifies a method set called its interface）。
+> >
+> > ```
+> > type I interface {
+> >     Method1()
+> >     Method2()
+> > }
+> > ```
+
+> > I的Method Set包含的就是其literal中的两个方法：Method1和Method2。我们可以通过reflect来获取interface类型的 Method Set：
+> >
+> > ```
+> > package main
+> >
+> > import (
+> >     "fmt"
+> >     "reflect"
+> > )
+> >
+> > type I interface {
+> >     Method1()
+> >     Method2()
+> > }
+> >
+> > func main() {
+> >     var i *I
+> >     elemType := reflect.TypeOf(i).Elem()
+> >     n := elemType.NumMethod()
+> >     for i := 0; i < n; i++ {
+> >         fmt.Println(elemType.Method(i).Name)
+> >     }
+> > }
+> >
+> > $go run interfacemethodset.go
+> > Method1
+> > Method2
+> > ```
+
+> * **除interface type外的类型的Method Set**
+>
+> > 对于非interface type的类型T，其Method Set为所有receiver为T类型的方法组成；而类型\*T的Method Set则包含所有receiver为T和\*T类型的方法。
+> >
+> > ```
+> > package main
+> >
+> > import "./utils"
+> >
+> > type T struct {
+> > }
+> >
+> > func (t T) Method1() {
+> > }
+> >
+> > func (t *T) Method2() {
+> > }
+> >
+> > func (t *T) Method3() {
+> > }
+> >
+> > func main() {
+> >     var t T
+> >     utils.DumpMethodSet(&t)
+> >
+> >     var pt *T
+> >     utils.DumpMethodSet(&pt)
+> > } 
+> > ```
+> >
+> > 我们要dump出T和\*T各自的Method Set，运行结果如下： 
+> >
+> > ```
+> > $go run othertypemethodset.go
+> > main.T's method sets:
+> >      Method1
+> >
+> > *main.T's method sets:
+> >      Method1
+> >      Method2
+> >      Method3
+> > ```
 
 
 
