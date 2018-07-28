@@ -389,96 +389,96 @@
 > // The element type is a pointer type whose base type is [4]byte.
 > // The pointer base type is an array type whose element type is byte.
 > var heads = []*[4]byte{
-> 	&[4]byte{'P', 'N', 'G', ' '},
-> 	&[4]byte{'G', 'I', 'F', ' '},
-> 	&[4]byte{'J', 'P', 'E', 'G'},
-> } 
+>     &[4]byte{'P', 'N', 'G', ' '},
+>     &[4]byte{'G', 'I', 'F', ' '},
+>     &[4]byte{'J', 'P', 'E', 'G'},
+> }
 > ```
 >
 > 可以简化为:
 >
 > ```
 > var heads = []*[4]byte{
-> 	{'P', 'N', 'G', ' '},
-> 	{'G', 'I', 'F', ' '},
-> 	{'J', 'P', 'E', 'G'},
+>     {'P', 'N', 'G', ' '},
+>     {'G', 'I', 'F', ' '},
+>     {'J', 'P', 'E', 'G'},
 > }
 > ```
-
+>
 > 如下例子中的数组字面量:
 >
 > ```
 > type language struct {
-> 	name string
-> 	year int
+>     name string
+>     year int
 > }
 >
 > var _ = [...]language{
-> 	language{"C", 1972},
-> 	language{"Python", 1991},
-> 	language{"Go", 2009},
+>     language{"C", 1972},
+>     language{"Python", 1991},
+>     language{"Go", 2009},
 > }
 > ```
-
+>
 > 可以简化为:
 >
 > ```
 > var _ = [...]language{
-> 	{"C", 1972},
-> 	{"Python", 1991},
-> 	{"Go", 2009},
+>     {"C", 1972},
+>     {"Python", 1991},
+>     {"Go", 2009},
 > }
 > ```
-
+>
 > 如下是映射值字面量的一个例子:
 >
 > ```
 > type LangCategory struct {
-> 	dynamic bool
-> 	strong  bool
+>     dynamic bool
+>     strong  bool
 > }
 >
 > // A value of map type whose key type is a struct type and
 > // whose element type is another map type "map[string]int".
 > var _ = map[LangCategory]map[string]int{
-> 	LangCategory{true, true}: map[string]int{
-> 		"Python": 1991,
-> 		"Erlang": 1986,
-> 	},
-> 	LangCategory{true, false}: map[string]int{
-> 		"JavaScript": 1995,
-> 	},
-> 	LangCategory{false, true}: map[string]int{
-> 		"Go":   2009,
-> 		"Rust": 2010,
-> 	},
-> 	LangCategory{false, false}: map[string]int{
-> 		"C": 1972,
-> 	},
+>     LangCategory{true, true}: map[string]int{
+>         "Python": 1991,
+>         "Erlang": 1986,
+>     },
+>     LangCategory{true, false}: map[string]int{
+>         "JavaScript": 1995,
+>     },
+>     LangCategory{false, true}: map[string]int{
+>         "Go":   2009,
+>         "Rust": 2010,
+>     },
+>     LangCategory{false, false}: map[string]int{
+>         "C": 1972,
+>     },
 > }
 > ```
-
+>
 > 可以简化为:
 >
 > ```
 > var _ = map[LangCategory]map[string]int{
-> 	{true, true}: {
-> 		"Python": 1991,
-> 		"Erlang": 1986,
-> 	},
-> 	{true, false}: {
-> 		"JavaScript": 1995,
-> 	},
-> 	{false, true}: {
-> 		"Go":   2009,
-> 		"Rust": 2010,
-> 	},
-> 	{false, false}: {
-> 		"C": 1972,
-> 	},
+>     {true, true}: {
+>         "Python": 1991,
+>         "Erlang": 1986,
+>     },
+>     {true, false}: {
+>         "JavaScript": 1995,
+>     },
+>     {false, true}: {
+>         "Go":   2009,
+>         "Rust": 2010,
+>     },
+>     {false, false}: {
+>         "C": 1972,
+>     },
 > }
 > ```
-
+>
 > 在某些情况下, 可以使用数组指针作为数组
 >
 > 在许多情况下, 我们可以使用指向数组的指针作为数组.
@@ -491,18 +491,18 @@
 > import "fmt"
 >
 > func main() {
-> 	var a [100]int
+>     var a [100]int
 >
-> 	for i, n := range &a { // copying a pointer is cheap
-> 		fmt.Println(i, n)
-> 	}
+>     for i, n := range &a { // copying a pointer is cheap
+>         fmt.Println(i, n)
+>     }
 >
-> 	for i, n := range a[:] { // copying a slice is cheap
-> 		fmt.Println(i, n)
-> 	}
+>     for i, n := range a[:] { // copying a slice is cheap
+>         fmt.Println(i, n)
+>     }
 > }
 > ```
-
+>
 > 如果第二个迭代参数既不被忽略\(用 \_ \)也不被省略\(不写\), 那么覆盖零数组指针的范围将会 panic. 在以下示例中, 前两个循环块中的每一个都会打印五个索引, 但最后一个会产生 panic.
 >
 > ```
@@ -511,22 +511,22 @@
 > import "fmt"
 >
 > func main() {
-> 	var p *[5]int // nil
+>     var p *[5]int // nil
 >
-> 	for i, _ := range p { // okay
-> 		fmt.Println(i)
-> 	}
+>     for i, _ := range p { // okay
+>         fmt.Println(i)
+>     }
 >
-> 	for i := range p { // okay
-> 		fmt.Println(i)
-> 	}
+>     for i := range p { // okay
+>         fmt.Println(i)
+>     }
 >
-> 	for i, n := range p { // panic
-> 		fmt.Println(i, n)
-> 	}
+>     for i, n := range p { // panic
+>         fmt.Println(i, n)
+>     }
 > }
 > ```
-
+>
 > 数组指针也可以用来索引数组元素. 通过 nil 数组指针索引数组元素会产生 panic.
 >
 > ```
@@ -535,15 +535,15 @@
 > import "fmt"
 >
 > func main() {
-> 	a := [5]int{2, 3, 5, 7, 11}
-> 	p := &a
-> 	p[0], p[1] = 17, 19
-> 	fmt.Println(a) // [17 19 5 7 11]
-> 	p = nil
-> 	p[0] = 31 // panic
+>     a := [5]int{2, 3, 5, 7, 11}
+>     p := &a
+>     p[0], p[1] = 17, 19
+>     fmt.Println(a) // [17 19 5 7 11]
+>     p = nil
+>     p[0] = 31 // panic
 > }
 > ```
-
+>
 > 我们也可以从数组指针派生切片. 从 nil 数组指针派生切片会产生 panic.
 >
 > ```
@@ -552,13 +552,12 @@
 > import "fmt"
 >
 > func main() {
-> 	pa := &[5]int{2, 3, 5, 7, 11}
-> 	s := pa[1:3]
-> 	fmt.Println(s) // [3 5]
-> 	pa = nil
-> 	s = pa[1:3] // panic
+>     pa := &[5]int{2, 3, 5, 7, 11}
+>     s := pa[1:3]
+>     fmt.Println(s) // [3 5]
+>     pa = nil
+>     s = pa[1:3] // panic
 > }
->
 > ```
 >
 > 我们也可以传递数组指针作为内置的 len 和 cap 函数的参数. 传入 nil 数组指针参数给这两个函数不会产生 panic.
@@ -566,7 +565,6 @@
 > ```
 > var pa *[5]int // nil
 > fmt.Println(len(pa), cap(pa)) // 5 5
->
 > ```
 
 
