@@ -4,7 +4,7 @@
 * [积累和收集](tips.md)
   * [不要过度panic](gotips/bu-yao-guo-du-panic.md)
   * [不要拘泥于面向对象](gotips/bu-yao-ju-ni-yu-mian-xiang-dui-xiang.md)
-  * [小提醒](gotips/xiao-ti-xing.md)
+  * [小case](gotips/xiao-ti-xing.md)
   * [一些基础介绍](gotips/yi-xie-ji-chu-jie-shao.md)
   * [context包](gotips/contextbao.md)
   * [go官方提供的工具](gotips/goguan-fang-ti-gong-de-gong-ju.md)
