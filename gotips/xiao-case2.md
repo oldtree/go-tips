@@ -7,11 +7,9 @@
 > 在Go中对于字符串可以有三种写法
 >
 > 1. 字面值 ： `var s = "程序员"`
-> 2. 码点表示法： `var s1 = "\u4e2d\u56fd\u4eba" `或者 ：`var s2 = "\U00004e2d\U000056fd\U00004eba"`
+> 2. 码点表示法： `var s1 = "\u4e2d\u56fd\u4eba"`或者 ：`var s2 = "\U00004e2d\U000056fd\U00004eba"`
 >
 > 3. 字节序列表示法（二进制表示法）：`var s3 = "\xe4\xb8\xad\xe5\x9b\xbd\xe4\xba\xba"`
 
 >
-
-
 
