@@ -145,24 +145,34 @@
 >
 > ```
 > func memoryLeaking() {
-> 	type T struct {
-> 		v [1<<20]int
-> 		t *T
-> 	}
+>     type T struct {
+>         v [1<<20]int
+>         t *T
+>     }
 >
-> 	var finalizer = func(t *T) {
-> 		 fmt.Println("finalizer called")
-> 	}
-> 	
-> 	var x, y T
-> 	
-> 	// SetFinalizer 会使 x 逃逸到堆上.
-> 	runtime.SetFinalizer(&x, finalizer)
-> 	
-> 	// 以下语句将导致 x 和 y 变得无法收集.
-> 	x.t, y.t = &y, &x // y 也逃逸到了 堆上.
+>     var finalizer = func(t *T) {
+>          fmt.Println("finalizer called")
+>     }
+>     
+>     var x, y T
+>     
+>     // SetFinalizer 会使 x 逃逸到堆上.
+>     runtime.SetFinalizer(&x, finalizer)
+>     
+>     // 以下语句将导致 x 和 y 变得无法收集.
+>     x.t, y.t = &y, &x // y 也逃逸到了 堆上.
 > }
 > ```
+
+* ##### Go语言的GC机制可以把它的内存占用看成三个层次
+
+> 1. `heap_in_use`是程序实际需要用到的内存的量，这部分是被引用到的，即使GC之后也无法释放。
+>
+> 2. GC管理的内存，GC管理的内存达到上次实际使用内存量的两倍（可配置），会触发GC操作，比如当前`heap_in_use`
+>
+>    是512M，那么当内存涨到1G的时候触发GC，经过回收之后的内存也许是300M，那么再次触发的时机就是内存使用量涨到600M的时候
+>
+> 3. 内存分配器管理的部分。向操作系统按页级别地申请大块内存，再给GC的分配使用。当GC回收之后，只是归还到分配池里面，还不会立刻归还给操作系统
 
 
 
