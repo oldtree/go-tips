@@ -19,4 +19,5 @@
   * [go中race竞争检测](gotips/gozhong-race-jing-zheng-jian-ce.md)
   * [一些值得参考的blog](gotips/yi-xie-zhi-de-can-kao-de-blog.md)
   * 小case2
+  * [go的context包](gotips/gode-context-bao.md)
 
