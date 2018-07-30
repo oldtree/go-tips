@@ -88,7 +88,7 @@
 > >     Method2()
 > > }
 > > ```
-
+> >
 > > I的Method Set包含的就是其literal中的两个方法：Method1和Method2。我们可以通过reflect来获取interface类型的 Method Set：
 > >
 > > ```
@@ -117,7 +117,7 @@
 > > Method1
 > > Method2
 > > ```
-
+>
 > * **除interface type外的类型的Method Set**
 >
 > > 对于非interface type的类型T，其Method Set为所有receiver为T类型的方法组成；而类型\*T的Method Set则包含所有receiver为T和\*T类型的方法。
@@ -145,10 +145,10 @@
 > >
 > >     var pt *T
 > >     utils.DumpMethodSet(&pt)
-> > } 
+> > }
 > > ```
 > >
-> > 我们要dump出T和\*T各自的Method Set，运行结果如下： 
+> > 我们要dump出T和\*T各自的Method Set，运行结果如下：
 > >
 > > ```
 > > $go run othertypemethodset.go
@@ -159,6 +159,44 @@
 > >      Method1
 > >      Method2
 > >      Method3
+> > ```
+
+> > 可以看出类型T的Method set仅包含一个receiver类型为T的方法：Method1，而\*T的Method Set则包含了T的Method Set以及所有receiver类型为\*T的Method。
+> >
+> > 如果此时我们有一个interface type如下：
+> >
+> > ```
+> > type I interface {
+> >     Method1()
+> >     Method2()
+> > }
+> > ```
+
+> > 那下面哪个赋值语句合法呢？合不合法完全依赖于右值类型是否实现了interface typeI的所有方法，即右值类型的Method Set是否包含了I的 所有方法.
+> >
+> > ```
+> > var t T
+> > var pt *T
+> >
+> > var i I = t
+> >
+> > or
+> >
+> > var i I = pt
+> > ```
+
+> > 编译错误告诉我们：
+> >
+> > ```
+> > var i I = t // cannot use t (type T) as type I in assignment:
+> >                   T does not implement I (Method2 method has pointer receiver) 
+> > ```
+> >
+> > T的Method Set中只有Method1一个方法，没有实现I接口中的 Method2，因此不能用t赋值给i；而\*T实现了I的所有接口，赋值合 法。不过Method set校验仅限于在赋值给interface变量时进行，无论是T还是\*T类型的方法集中的方法，对于T或\*T类型变量都是可见且可以调用的，如下面代码 都是合法的：
+
+> > ```
+> > pt.Method1()
+> > t.Method3()
 > > ```
 
 
