@@ -198,12 +198,12 @@
 > > pt.Method1()
 > > t.Method3()
 > > ```
-
+> >
 > > 因为Go编译器会自动为你的代码做receiver转换
 > >
 > > ```
 > > pt.Method1() <=> (*pt).Method1()
-> > t.Method3() <=> (&t).Method3() 
+> > t.Method3() <=> (&t).Method3()
 > > ```
 > >
 > > 很多人纠结于method定义时receiver的类型（T or \*T），个人觉得有两点考虑
@@ -253,9 +253,9 @@
 > >      I1Method2
 > >      I2Method
 > > ```
-
+> >
 > > 可以看出嵌入interface type的interface type I3 的Method Set包含了被嵌入的interface type：I1和I2
-
+> >
 > > 的Method Set。很多情况下，我们Go的interface type中仅包含有少量方法，常常仅是一个Method，通过interface type embeding来定义一个新interface，这是Go的一个惯用法，比如我们常用的io包中的Reader, Writer以及ReadWriter接口
 > >
 > > ```
@@ -272,7 +272,7 @@
 > >     Writer
 > > }
 > > ```
-
+> >
 > > **struct embeding interface**
 > >
 > > 在struct中嵌入interface type后，struct的Method Set中将包含interface的Method Set
@@ -374,24 +374,24 @@
 > >      PtrMethodOfS
 > >      PtrMethodOfT
 > > ```
-
+> >
 > > 可以看出：
-
+> >
 > > 类型C的Method Set = T的Method Set + \*S的Method Set
-
+> >
 > > 类型\*C的Method Set = \*T的Method Set + \*S的Method Set
 > >
 > > 同时通过例子可以看出，无论是T还是\*S的方法，C或\*C类型变量均可调用（编译器甜头），不会被局限在Method Set中
-
+>
 > * **alias type的Method Set**
-
+>
 > > Go支持为已有类型定义alias type，如
 > >
 > > ```
 > > type MyInterface I
 > > type Mystruct T
 > > ```
->
+> >
 > > 对于alias type, Method Set是如何定义的呢？我们看下面例子
 > >
 > > ```
@@ -448,11 +448,71 @@
 > > main.MyStruct's method set is empty!
 > > *main.MyStruct's method set is empty!
 > > ```
->
+> >
 > > 从例子的结果上来看，Go对于interface和struct的alias type给出了“不一致”的结果：
 > >
 > > MyInterface的Method Set与接口类型I Method Set一致；  
 > > 而MyStruct并未得到T的哪怕一个Method，MyStruct的Method Set为空。
+
+* **Method Type、Method Expression、Method Value**
+
+> Go中没有class，方法与对象通过receiver联系在一起，我们可以为任何非builtin类型定义method:
+>
+> ```
+> type T struct {
+>     a int
+> }
+>
+> func (t T) Get() int       { return t.a }
+> func (t *T) Set(a int) int { t.a = a; return t.a } 
+> ```
+>
+> 在C++等OO语言中，对象在调用方法时，编译器会自动在方法的第一个参数中传入this/self指针，而对于Go来 说，receiver也是同样道理，将T的method转换为普通function定义:
+>
+> ```
+> func Get(t T) int       { return t.a }
+> func Set(t *T, a int) int { t.a = a; return t.a }
+> ```
+
+> 这种function形式被称为
+>
+> **Method Type**
+>
+> ，也可以称为Method的
+>
+> **signature**
+>
+> Method的一般使用方式如下：
+>
+> ```
+> var t T
+> t.Get()
+> t.Set(1)
+> ```
+
+> 不过我们也可以像普通function那样使用它，根据上面的Method Type定义:
+>
+> ```
+> var t T
+> T.Get(t)
+> (*T).Set(&t, 1)
+> ```
+
+> 这种以直接以类型名T调用方法M的表达方法称为
+>
+> **Method Expression**
+>
+> 。类型T只能调用T的Method Set中的方法；同理\*T只能调用\*T的Method Set中的方法。上述例子中T的Method Set中只有Get，因此T.Get是合法的。但T.Set则不合法：
+>
+> ```
+> T.Set(2) //invalid method expression T.Set (needs pointer receiver: (*T).Set)
+> ```
+
+> ```
+> 我们只能使用(*T).Set(&t, 11)
+> ```
+
+> 这样看来Method Expression有些类似于C++中的static方法\(以该类的某个对象实例作为第一个参数\)
 
 
 
