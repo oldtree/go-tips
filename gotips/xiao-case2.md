@@ -160,7 +160,7 @@
 > >      Method2
 > >      Method3
 > > ```
-
+> >
 > > 可以看出类型T的Method set仅包含一个receiver类型为T的方法：Method1，而\*T的Method Set则包含了T的Method Set以及所有receiver类型为\*T的Method。
 > >
 > > 如果此时我们有一个interface type如下：
@@ -171,7 +171,7 @@
 > >     Method2()
 > > }
 > > ```
-
+> >
 > > 那下面哪个赋值语句合法呢？合不合法完全依赖于右值类型是否实现了interface typeI的所有方法，即右值类型的Method Set是否包含了I的 所有方法.
 > >
 > > ```
@@ -184,20 +184,275 @@
 > >
 > > var i I = pt
 > > ```
-
+> >
 > > 编译错误告诉我们：
 > >
 > > ```
 > > var i I = t // cannot use t (type T) as type I in assignment:
-> >                   T does not implement I (Method2 method has pointer receiver) 
+> >                   T does not implement I (Method2 method has pointer receiver)
 > > ```
 > >
 > > T的Method Set中只有Method1一个方法，没有实现I接口中的 Method2，因此不能用t赋值给i；而\*T实现了I的所有接口，赋值合 法。不过Method set校验仅限于在赋值给interface变量时进行，无论是T还是\*T类型的方法集中的方法，对于T或\*T类型变量都是可见且可以调用的，如下面代码 都是合法的：
-
+> >
 > > ```
 > > pt.Method1()
 > > t.Method3()
 > > ```
+
+> > 因为Go编译器会自动为你的代码做receiver转换
+> >
+> > ```
+> > pt.Method1() <=> (*pt).Method1()
+> > t.Method3() <=> (&t).Method3() 
+> > ```
+> >
+> > 很多人纠结于method定义时receiver的类型（T or \*T），个人觉得有两点考虑
+> >
+> > * 效率:Go方法调用receiver是以传值的形式传入方法中的。如果类型size较大，以value形式传入消耗较大，这时指针类型就是首选
+> >
+> > * 是否赋值给interface变量、以什么形式赋值:就像本节所描述的，由于T和\*T的Method Set可能不同，我们在设计Method receiver type时需要考虑在interface赋值时通过对Method set的校验
+>
+> * **embeding type的Method Set**
+>
+> > **interface embeding**
+> >
+> > ```
+> > package main
+> >
+> > import "./utils"
+> >
+> > type I1 interface {
+> >     I1Method1()
+> >     I1Method2()
+> > }
+> > type I2 interface {
+> >     I2Method()
+> > }
+> >
+> > type I3 interface {
+> >     I1
+> >     I2
+> > }
+> >
+> > func main() {
+> >     utils.DumpMethodSet((*I1)(nil))
+> >     utils.DumpMethodSet((*I2)(nil))
+> >     utils.DumpMethodSet((*I3)(nil))
+> > }
+> >
+> > $go run embedinginterface.go
+> > main.I1's method sets:
+> >      I1Method1
+> >      I1Method2
+> >
+> > main.I2's method sets:
+> >      I2Method
+> >
+> > main.I3's method sets:
+> >      I1Method1
+> >      I1Method2
+> >      I2Method
+> > ```
+
+> > 可以看出嵌入interface type的interface type I3 的Method Set包含了被嵌入的interface type：I1和I2
+
+> > 的Method Set。很多情况下，我们Go的interface type中仅包含有少量方法，常常仅是一个Method，通过interface type embeding来定义一个新interface，这是Go的一个惯用法，比如我们常用的io包中的Reader, Writer以及ReadWriter接口
+> >
+> > ```
+> > type Reader interface {
+> >     Read(p []byte) (n int, err error)
+> > }
+> >
+> > type Writer interface {
+> >     Write(p []byte) (n int, err error)
+> > }
+> >
+> > type ReadWriter interface {
+> >     Reader
+> >     Writer
+> > }
+> > ```
+
+> > **struct embeding interface**
+> >
+> > 在struct中嵌入interface type后，struct的Method Set中将包含interface的Method Set
+> >
+> > ```
+> > type T struct {
+> >     I1
+> > }
+> >
+> > func (T) Method1() {
+> >
+> > }
+> >
+> > ....
+> >
+> > func main() {
+> >     … …
+> >     var t T
+> >     utils.DumpMethodSet(&t)
+> >     var pt = &T{
+> >         I1: I1Impl{},
+> >     }
+> >     utils.DumpMethodSet(&pt)
+> > }    
+> >
+> > main.T's method sets:
+> >      I1Method1
+> >      I1Method2
+> >      Method1
+> >
+> > *main.T's method sets:
+> >      I1Method1
+> >      I1Method2
+> >      Method1
+> > ```
+> >
+> > **struct embeding struct**
+> >
+> > 在struct中embeding struct提供了一种“继承”的手段，外部的Struct可以“继承”嵌入struct的所有方法（无论receiver是T还是\*T类型）实现，但 Method Set可能会略有不同。看下面例子
+> >
+> > ```
+> > type T struct {
+> > }
+> >
+> > func (T) InstMethod1OfT() {
+> >
+> > }
+> >
+> > func (T) InstMethod2OfT() {
+> >
+> > }
+> >
+> > func (*T) PtrMethodOfT() {
+> >
+> > }
+> >
+> > type S struct {
+> > }
+> >
+> > func (S) InstMethodOfS() {
+> >
+> > }
+> >
+> > func (*S) PtrMethodOfS() {
+> > }
+> >
+> > type C struct {
+> >     T
+> >     *S
+> > }
+> >
+> > func main() {
+> >     var c = C{S: &S{}}
+> >     utils.DumpMethodSet(&c)
+> >     var pc = &C{S: &S{}}
+> >     utils.DumpMethodSet(&pc)
+> >
+> >     c.InstMethod1OfT()
+> >     c.PtrMethodOfT()
+> >     c.InstMethodOfS()
+> >     c.PtrMethodOfS()
+> >     pc.InstMethod1OfT()
+> >     pc.PtrMethodOfT()
+> >     pc.InstMethodOfS()
+> >     pc.PtrMethodOfS()
+> > }
+> >
+> > $go run embedingstructinstruct.go
+> > main.C's method sets:
+> >      InstMethod1OfT
+> >      InstMethod2OfT
+> >      InstMethodOfS
+> >      PtrMethodOfS
+> >
+> > *main.C's method sets:
+> >      InstMethod1OfT
+> >      InstMethod2OfT
+> >      InstMethodOfS
+> >      PtrMethodOfS
+> >      PtrMethodOfT
+> > ```
+
+> > 可以看出：
+
+> > 类型C的Method Set = T的Method Set + \*S的Method Set
+
+> > 类型\*C的Method Set = \*T的Method Set + \*S的Method Set
+> >
+> > 同时通过例子可以看出，无论是T还是\*S的方法，C或\*C类型变量均可调用（编译器甜头），不会被局限在Method Set中
+
+> * **alias type的Method Set**
+
+> > Go支持为已有类型定义alias type，如
+> >
+> > ```
+> > type MyInterface I
+> > type Mystruct T
+> > ```
+>
+> > 对于alias type, Method Set是如何定义的呢？我们看下面例子
+> >
+> > ```
+> > type I interface {
+> >     IMethod1()
+> >     IMethod2()
+> > }
+> >
+> > type T struct {
+> > }
+> >
+> > func (T) InstMethod() {
+> >
+> > }
+> > func (*T) PtrMethod() {
+> >
+> > }
+> >
+> > type MyInterface I
+> > type MyStruct T
+> >
+> > func main() {
+> >     utils.DumpMethodSet((*I)(nil))
+> >
+> >     var t T
+> >     utils.DumpMethodSet(&t)
+> >     var pt = &T{}
+> >     utils.DumpMethodSet(&pt)
+> >
+> >     utils.DumpMethodSet((*MyInterface)(nil))
+> >
+> >     var m MyStruct
+> >     utils.DumpMethodSet(&m)
+> >     var pm = &MyStruct{}
+> >     utils.DumpMethodSet(&pm)
+> > }
+> >
+> > $go run aliastypemethodset.go
+> > main.I's method sets:
+> >      IMethod1
+> >      IMethod2
+> >
+> > main.T's method sets:
+> >      InstMethod
+> >
+> > *main.T's method sets:
+> >      InstMethod
+> >      PtrMethod
+> >
+> > main.MyInterface's method sets:
+> >      IMethod1
+> >      IMethod2
+> >
+> > main.MyStruct's method set is empty!
+> > *main.MyStruct's method set is empty!
+> > ```
+>
+> > 从例子的结果上来看，Go对于interface和struct的alias type给出了“不一致”的结果：
+> >
+> > MyInterface的Method Set与接口类型I Method Set一致；  
+> > 而MyStruct并未得到T的哪怕一个Method，MyStruct的Method Set为空。
 
 
 
