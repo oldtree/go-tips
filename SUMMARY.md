@@ -20,4 +20,5 @@
   * [一些值得参考的blog](gotips/yi-xie-zhi-de-can-kao-de-blog.md)
   * 小case2
   * [go的context包](gotips/gode-context-bao.md)
+  * [Go的可移植性](gotips/gode-ke-yi-zhi-xing.md)
 
