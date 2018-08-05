@@ -912,9 +912,9 @@
 > > invoke getAStorageArr
 > > recv something from a recv channel
 > > ```
-
+> >
 > > 通过例子我们可以看出：
-
+> >
 > > 1\) select执行开始时，首先所有case expression的表达式都会被求值一遍，按语法先后次序。
 > >
 > > ```
@@ -922,7 +922,7 @@
 > > invoke takeASendChannel
 > > invoke getANumToChannel
 > > ```
-
+> >
 > > 例外的是recv channel的位于赋值等号左边的表达式（这里是：\(getAStorageArr\(\)\)\[0\]）不会被求值。
 > >
 > > 2\) 如果选择要执行的case是一个recv channel，那么它的赋值等号左边的表达式会被求值：如例子中当goroutine 3s后向recvchan写入一个int值后，select选择了recv channel执行，此时对=左侧的表达式\(getAStorageArr\(\)\)\[0\] 开始求值，输出“invoke getAStorageArr”.
@@ -980,12 +980,51 @@
 > >
 > > goroutine 1 [running]:
 > > ```
-
+> >
 > > panic在zoo中发生，在zoo真正退出前，zoo中注册的defer函数会被逐一执行\(FILO\)，由于zoo defer中没有捕捉panic，因此panic被抛向其caller：bar。
 > >
 > > 这时对于bar而言，其函数体中的zoo的调用就好像变成了panic调用似的，zoo有些类似于“黑客帝国3”中里奥被史密斯\(panic\)感 染似的，也变成了史密斯\(panic\)。panic在bar中扩展开来，bar中的defer也没有捕捉和recover panic，因此在bar中的defer func执行完毕后，panic继续抛给bar的caller: foo；
-
+> >
 > > 这时对于foo而言，bar就变成了panic，同理，最终foo将panic抛给了main,main与上述函数一样，没有recover，直接异常返回，导致进程异常退出
+
+> > recover只有在defer函数中调用才能起到recover的作用，这样recover就和defer函数有了紧密联系。我们在zoo的defer函数中捕捉并recover这个panic.
+> >
+> > ```
+> > func zoo() {
+> >     defer func() {
+> >         fmt.Println("zoo defer func1 invoked")
+> >     }()
+> >
+> >     defer func() {
+> >         if x := recover(); x != nil {
+> >             log.Printf("recover panic: %v in zoo recover defer func", x)
+> >         }
+> >     }()
+> >
+> >     defer func() {
+> >         fmt.Println("zoo defer func2 invoked")
+> >     }()
+> >
+> >     fmt.Println("zoo invoked")
+> >     panic("zoo runtime exception")
+> > }
+> >
+> > $go run recover.go
+> > foo invoked
+> > bar invoked
+> > zoo invoked
+> > zoo defer func2 invoked
+> > 2015/09/17 16:28:00 recover panic: zoo runtime exception in zoo recover defer func
+> > zoo defer func1 invoked
+> > do something after zoo in bar
+> > bar defer func invoked
+> > do something after bar in foo
+> > foo defer func invoked
+> > ```
+
+> > 由于zoo在defer里恢复了panic，这样在zoo返回后，bar不会感知到任何异常，将按正常逻辑输出函数执行内容，比如：“do something after zoo in bar”,以此类推。
+> >
+> > 但若如果在zoo defer func中recover panic后，又raise another panic，那么zoo对于bar来说就又会变成panic了
 
 
 
