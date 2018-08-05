@@ -47,5 +47,5 @@ windows/386
 windows/amd64
 ```
 
-
+Go官方似乎没有给出明确的porting guide，关于将Go语言porting到其他平台上的内容更多是在[golang-dev](https://groups.google.com/forum/#!forum/golang-dev)这样的小圈子中讨论的事情。但就Go语言这么短的时间就能很好的支持这么多平台来看，Go的porting还是相对easy的。从个人对Go的了解来看，这一定程度上得益于Go独立实现了runtime
 
