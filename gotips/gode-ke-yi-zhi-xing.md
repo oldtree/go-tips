@@ -66,3 +66,11 @@ runtime是支撑程序运行的基础。我们最熟悉的莫过于libc（C运�
 
 [libc](http://tonybai.com/2006/07/08/plauger-c-standard-lib-assert-header/)等c runtime lib是很早以前就已经实现的了，甚至有些老旧的libc还是单线程的。一些从事c/c++开发多年的程序员早年估计都有过这样的经历：那就是链接runtime库时甚至需要选择链接支持多线程的库还是只支持单线程的库。除此之外，c runtime的版本也参差不齐。这样的c runtime状况完全不能满足go语言自身的需求；另外Go的目标之一是原生支持并发，并使用[goroutine模型](http://tonybai.com/2017/06/23/an-intro-about-goroutine-scheduler/)，c runtime对此是无能为力的，因为c runtime本身是基于线程模型的。综合以上因素，Go自己实现了runtime，并封装了syscall，为不同平台上的go user level代码提供封装完成的、统一的go标准库；同时Go runtime实现了对goroutine模型的支持。
 
+独立实现的go runtime层将Go user-level code与OS syscall解耦，把Go porting到一个新平台时，将runtime与新平台的syscall对接即可\(当然porting工作不仅仅只有这些\)；同时，runtime层的实现基本摆脱了Go程序对libc的依赖，这样静态编译的Go程序具有很好的平台适应性。比如：一个compiled for linux amd64的Go程序可以很好的运行于不同linux发行版（centos、ubuntu）下。
+
+```
+otool工具(linux上可以用ldd)可以用来查看两个文件的对外部动态库的依赖情况
+```
+
+
+
