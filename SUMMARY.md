@@ -22,4 +22,5 @@
   * [go的context包](gotips/gode-context-bao.md)
   * [Go的可移植性](gotips/gode-ke-yi-zhi-xing.md)
   * [goroutine调度器](gotips/goroutinediao-du-qi.md)
+  * [QuantumComputing](gotips/quantumcomputing.md)
 
